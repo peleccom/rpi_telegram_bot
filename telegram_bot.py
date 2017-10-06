@@ -1,152 +1,132 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import requests
-import time
+#
+# Simple Rapberry pi bot
+
+from telegram.ext import Updater, CommandHandler, Job
+import logging
 import subprocess
 import os
-import sys
-#import mailchecker
+from functools import wraps
 
-requests.packages.urllib3.disable_warnings() # Подавление InsecureRequestWarning, с которым я пока ещё не разобрался
-
-# Ключ авторизации Вашего бота Вы можете получить в любом клиенте Telegram у бота @BotFather
-# ADMIN_ID - идентификатор пользователя (то есть Вас), которому подчиняется бот
-# Чтобы определить Ваш ID, я предлагаю отправить боту сообщение от своего имени (аккаунта) через любой клиент
-# А затем получить это сообщения с помощью обычного GET запроса
-# Для этого вставьте в адресную строку Вашего браузера следующий адрес, заменив <token> на свой ключ:
-# https://api.telegram.org/bot<token>/getUpdates
-# Затем, в ответе найдите объект "from":{"id":01234567,"first_name":"Name","username":"username"}
-# Внимательно проверьте имя, логин и текст сообщения
-# Если всё совпадает, то цифровое значение ключа "id" - это и есть ваш идентификатор
-
-TOKEN = os.environ.get('BOT_TOKEN') # Ключ авторизации для Вашего бота
-ADMIN_ID = os.environ.get('BOT_ADMIN_ID') # ID пользователя. Комманды от других пользователей выполняться не будут
+TOKEN = os.environ.get('BOT_TOKEN') # Bot token value
+ADMIN_ID = os.environ.get('BOT_ADMIN_ID') # Only admin can send message to this bot
 try:
     ADMIN_ID = int(ADMIN_ID)
 except:
     pass
 
-INTERVAL = 3 # Интервал проверки наличия новых сообщений (обновлений) на сервере в секундах
-URL = 'https://api.telegram.org/bot' # Адрес HTTP Bot API
-offset = 0 # ID последнего полученного обновления
 
-def check_updates():
-    """Проверка обновлений на сервере и инициация действий, в зависимости от команды"""
-    global offset
-    data = {'offset': offset + 1, 'limit': 5, 'timeout': 0} # Формируем параметры запроса
+# Enable logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
 
-    try:
-        request = requests.post(URL + TOKEN + '/getUpdates', data=data) # Отправка запроса обновлений
-    except:
-        log_event('Error getting updates') # Логгируем ошибку
-        return False # Завершаем проверку
+logger = logging.getLogger(__name__)
 
-    if not request.status_code == 200: return False # Проверка ответа сервера
-    if not request.json()['ok']: return False # Проверка успешности обращения к API
-    for update in request.json()['result']: # Проверка каждого элемента списка
-        offset = update['update_id'] # Извлечение ID сообщения
 
-        # Ниже, если в обновлении отсутствует блок 'message'
-        # или же в блоке 'message' отсутствует блок 'text', тогда
-        if not 'message' in update or not 'text' in update['message']:
-            log_event('Unknown update: %s' % update) # сохраняем в лог пришедшее обновление
-            continue # и переходим к следующему обновлению
-        from_id = update['message']['chat']['id'] # Извлечение ID чата (отправителя)
-        name = update['message']['chat']['username'] # Извлечение username отправителя
-        if from_id <> ADMIN_ID: # Если отправитель не является администратором, то
-            send_text("You're not autorized to use me!", from_id) # ему отправляется соответствующее уведомление
-            log_event('Unautorized: %s' % update) # обновление записывается в лог
-            continue # и цикл переходит к следующему обновлению
-        message = update['message']['text'] # Извлечение текста сообщения
-        parameters = (offset, name, from_id, message)
-        log_event('Message (id%s) from %s (id%s): "%s"' % parameters) # Вывод в лог ID и текста сообщения
 
-        # В зависимости от сообщения, выполняем необходимое действие
-        run_command(*parameters)
-        
-def run_command(offset, name, from_id, cmd):
-    if cmd == '/ping': # Ответ на ping
-        send_text(from_id, 'pong') # Отправка ответа
 
-    elif cmd == '/help': # Ответ на help
-        send_text(from_id, 'No help today. Sorry.') # Ответ
-    elif cmd.startswith('/ttl'):
-        say_ttl(cmd[5:].decode('utf8'))
-    elif cmd == '/photo': # Запрос фотографии с подключенной Web-камеры
-        # Для оператора If ниже. Если первая попытка успешна - выполняется условие, если нет, то вторая попытка и условие
-        # Если и вторая не успешна, тогда отчитываемся об ошибке
-        # Всё потому, что на моей конфигурации крайне изредка камера бывает недоступна с первого раза
-        if make_photo(offset) or make_photo(offset):
-            # Ниже, отправка пользователю уведомления об активности бота
-            requests.post(URL + TOKEN + '/sendChatAction', data={'chat_id': from_id, 'action': 'upload_photo'})
-            send_photo(from_id, offset) # Вызов процедуры отправки фото
-        else:
-            send_text(from_id, 'Error occured') # Ответ, сообщающий об ошибке
+LIST_OF_ADMINS = [ADMIN_ID, ]
 
-    elif cmd == '/mail':
-        check_mail() # Вызов процедуры проверки почты
-    else:
-        send_text(from_id, 'Got it.') # Отправка ответа
+def restricted(func):
+    @wraps(func)
+    def wrapped(bot, update, *args, **kwargs):
+        user_id = update.effective_user.id
+        if user_id not in LIST_OF_ADMINS:
+            logging.warning("Unauthorized access denied for {}.".format(user_id))
+            return
+        return func(bot, update, *args, **kwargs)
+    return wrapped
 
-def log_event(text):
-    """
-    Процедура логгирования
-    ToDo: 1) Запись лога в файл
-    """
-    event = '%s >> %s' % (time.ctime(), text)
-    print event
 
-def send_text(chat_id, text):
-    """Отправка текстового сообщения по chat_id
-    ToDo: повторная отправка при неудаче"""
-    log_event('Sending to %s: %s' % (chat_id, text)) # Запись события в лог
-    data = {'chat_id': chat_id, 'text': text} # Формирование запроса
-    request = requests.post(URL + TOKEN + '/sendMessage', data=data) # HTTP запрос
-    if not request.status_code == 200: # Проверка ответа сервера
-        return False # Возврат с неудачей
-    return request.json()['ok'] # Проверка успешности обращения к API
+def start(bot, update):
+    update.message.reply_text('Hi!')
 
-def make_photo(photo_id):
-    """Обращение к приложению fswebcam для получения снимка с Web-камеры"""
-    photo_name = '/tmp/telegram_bot_photo_%s.jpg' % photo_id # Формирование имени файла фотографии
-    subprocess.call('fswebcam -q -r 1280x720 %s' % photo_name, shell=True) # Вызов shell-команды
-    return os.path.exists(photo_name) # Проверка, появился ли файл с таким названием
+@restricted
+def ping(bot, update):
+    update.message.reply_text('pong')
 
-def say_ttl(text):
+@restricted
+def tts(bot,update):
     """Say text using festival ttl module"""
-    subprocess.Popen(["festival", "--tts", "--language", "russian"], stdin=subprocess.PIPE).communicate(text.encode('utf8')) # Вызов shell-команды
-    
+    text = update.message.text[5:]
+    subprocess.Popen(["festival", "--tts", "--language", "russian"], stdin=subprocess.PIPE).communicate(text.encode('utf8'))
 
-def send_photo(chat_id, photo_id):
-    """Отправка фото по его идентификатору выбранному контакту"""
-    data = {'chat_id': chat_id} # Формирование параметров запроса
-    photo_name = '/tmp/telegram_bot_photo_%s.jpg' % photo_id # Формирования имени файла фотографии
-    if not os.path.exists(photo_name): return False # Проверка существования фотографии
-    files = {'photo': open(photo_name, 'rb')} # Открытие фото и присвоение
-    request = requests.post(URL + TOKEN + '/sendPhoto', data=data, files=files) # Отправка фото
-    return request.json()['ok'] # Возврат True или False, полученного из ответа сервера, в зависимости от результата
-
-def check_mail():
-    """Проверка почтовых ящиков с помощью самодельного модуля"""
-    print "Подключите и настройте модуль проверки почты"
-    return False
-    try:
-        log_event('Checking mail...') # Запись в лог
-        respond = mailchecker.check_all() # Получаем ответ от модуля проверки
-    except:
-        log_event('Mail check failed.') # Запись в лог
-        return False # И возврат с неудачей
-    if not respond: respond = 'No new mail.' # Если ответ пустой, тогда заменяем его на соответствующее сообщение
-    send_text(ADMIN_ID, respond) # Отправляем это сообщение администратору
-    return True
-
-if __name__ == "__main__":
-    if not TOKEN or not ADMIN_ID:
-        print("You should provide BOT_TOKEN and BOT_ADMIN_ID")
-	sys.exit(1)
-    while True:
+@restricted
+def photo(bot,update):
+    photo_id = update.update_id
+    photo_name = '/tmp/telegram_bot_photo_%s.jpg' % photo_id
+    subprocess.call('fswebcam -q -r 1280x720 %s' % photo_name, shell=True)
+    if os.path.exists(photo_name): # Check if fiel exists
+        update.message.reply_text("Uploading...")
+        with open(photo_name, 'rb') as f:
+            update.message.reply_photo(photo=f)
         try:
-            check_updates()
-            time.sleep(INTERVAL)
-        except KeyboardInterrupt:
-            print 'Прервано пользователем..'
-            break
+            os.remove(photo_name)
+        except:
+            logger.debug("Cannot delete tmp file {}".format(photo_name))    
+        
+@restricted
+def video(bot, update):
+    file_id = update.update_id
+    duration = 10
+    file_name = '/tmp/telegram_bot_video_%s.avi' % file_id
+    update.message.reply_text("Starting record...")
+    subprocess.call('ffmpeg  -f v4l2 -r 25 -s 1280x720  -t {duration} -i /dev/video0 {avi_file}'.format(duration=duration, avi_file=file_name), shell=True)
+    if os.path.exists(file_name): # Check if file exists
+        update.message.reply_text("Uploading...")
+        with open(file_name, 'rb') as f:
+            update.message.reply_video(video=f)
+        try:
+            os.remove(file_name)
+        except:
+            logger.debug("Cannot delete tmp file {}".format(file_name))
+
+
+@restricted
+def audio(bot, update):
+    file_id = update.update_id
+    file_name = '/tmp/telegram_bot_audio_%s.wav' % file_id
+    update.message.reply_text("Starting record...")
+    subprocess.call('arecord -D plughw:1 --duration=10 -f cd -vv %s' % file_name, shell=True)
+    if os.path.exists(file_name): # Check if file exists
+        update.message.reply_text("Uploading...")
+        with open(file_name, 'rb') as f:
+            update.message.reply_audio(audio=f)
+        try:
+            os.remove(file_name)
+        except:
+            logger.debug("Cannot delete tmp file {}".format(file_name))
+
+
+def error(bot, update, error):
+    logger.warning('Update "%s" caused error "%s"' % (update, error))
+
+
+def main():
+    updater = Updater(TOKEN)
+
+    # Get the dispatcher to register handlers
+    dp = updater.dispatcher
+
+    # on different commands - answer in Telegram
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("ping", ping))
+    dp.add_handler(CommandHandler("tts", tts))
+    dp.add_handler(CommandHandler("photo", photo))
+    dp.add_handler(CommandHandler("audio", audio))
+    dp.add_handler(CommandHandler("video", video))
+    # log all errors
+    dp.add_error_handler(error)
+
+    # Start the Bot
+    updater.start_polling()
+
+    # Block until you press Ctrl-C or the process receives SIGINT, SIGTERM or
+    # SIGABRT. This should be used most of the time, since start_polling() is
+    # non-blocking and will stop the bot gracefully.
+    updater.idle()
+
+
+if __name__ == '__main__':
+    main()
