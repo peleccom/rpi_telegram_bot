@@ -70,7 +70,7 @@ def run_command(offset, name, from_id, cmd):
     elif cmd == '/help': # Ответ на help
         send_text(from_id, 'No help today. Sorry.') # Ответ
     elif cmd.startswith('/ttl'):
-        say_ttl(cmd)
+        say_ttl(cmd[5:])
     elif cmd == '/photo': # Запрос фотографии с подключенной Web-камеры
         # Для оператора If ниже. Если первая попытка успешна - выполняется условие, если нет, то вторая попытка и условие
         # Если и вторая не успешна, тогда отчитываемся об ошибке
@@ -113,7 +113,7 @@ def make_photo(photo_id):
 
 def say_ttl(text):
     """Say text using festival ttl module"""
-    subprocess.call('festival --tts --language russian', shell=True, stdin=StringIO(text)) # Вызов shell-команды
+    subprocess.Popen(["festival", "--tts", "--language", "russian"], stdin=subprocess.PIPE).communicate(text.encode('utf8')) # Вызов shell-команды
     
 
 def send_photo(chat_id, photo_id):
