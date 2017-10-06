@@ -69,7 +69,8 @@ def run_command(offset, name, from_id, cmd):
 
     elif cmd == '/help': # Ответ на help
         send_text(from_id, 'No help today. Sorry.') # Ответ
-
+    elif cmd.startswith('/ttl'):
+        say_ttl(cmd)
     elif cmd == '/photo': # Запрос фотографии с подключенной Web-камеры
         # Для оператора If ниже. Если первая попытка успешна - выполняется условие, если нет, то вторая попытка и условие
         # Если и вторая не успешна, тогда отчитываемся об ошибке
@@ -109,6 +110,11 @@ def make_photo(photo_id):
     photo_name = '/tmp/telegram_bot_photo_%s.jpg' % photo_id # Формирование имени файла фотографии
     subprocess.call('fswebcam -q -r 1280x720 %s' % photo_name, shell=True) # Вызов shell-команды
     return os.path.exists(photo_name) # Проверка, появился ли файл с таким названием
+
+def say_ttl(text):
+    """Say text using festival ttl module"""
+    subprocess.call('festival --tts --language russian', shell=True, stdin=StringIO(text)) # Вызов shell-команды
+    
 
 def send_photo(chat_id, photo_id):
     """Отправка фото по его идентификатору выбранному контакту"""
