@@ -20,6 +20,10 @@ requests.packages.urllib3.disable_warnings() # Подавление InsecureRequ
 
 TOKEN = os.environ.get('BOT_TOKEN') # Ключ авторизации для Вашего бота
 ADMIN_ID = os.environ.get('BOT_ADMIN_ID') # ID пользователя. Комманды от других пользователей выполняться не будут
+try:
+    ADMIN_ID = int(ADMIN_ID)
+except:
+    pass
 
 INTERVAL = 3 # Интервал проверки наличия новых сообщений (обновлений) на сервере в секундах
 URL = 'https://api.telegram.org/bot' # Адрес HTTP Bot API
