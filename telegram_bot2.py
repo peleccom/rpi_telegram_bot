@@ -100,9 +100,10 @@ def audio(bot, update):
 
 
 @restricted
-def temp(bot, update):
-    out = subproces.check_output(["/opt/vc/bin/vcgencmd", "measure_temp"])
+def measure_temp(bot, update):
+    out = subprocess.check_output(["/opt/vc/bin/vcgencmd", "measure_temp"])
     update.message.reply_text(out)
+
 
 def error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"' % (update, error))
@@ -121,7 +122,7 @@ def main():
     dp.add_handler(CommandHandler("photo", photo))
     dp.add_handler(CommandHandler("audio", audio))
     dp.add_handler(CommandHandler("video", video))
-    dp.add_handler(CommandHandler("temp", temp))
+    dp.add_handler(CommandHandler("temp", measure_temp))
     # log all errors
     dp.add_error_handler(error)
 
