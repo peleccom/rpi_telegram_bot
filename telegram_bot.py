@@ -70,7 +70,7 @@ def run_command(offset, name, from_id, cmd):
     elif cmd == '/help': # Ответ на help
         send_text(from_id, 'No help today. Sorry.') # Ответ
     elif cmd.startswith('/ttl'):
-        say_ttl(cmd[5:])
+        say_ttl(cmd[5:].decode('utf8'))
     elif cmd == '/photo': # Запрос фотографии с подключенной Web-камеры
         # Для оператора If ниже. Если первая попытка успешна - выполняется условие, если нет, то вторая попытка и условие
         # Если и вторая не успешна, тогда отчитываемся об ошибке
