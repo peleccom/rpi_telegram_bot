@@ -105,6 +105,10 @@ def measure_temp(bot, update):
     update.message.reply_text(out)
 
 
+@restricted
+def reboot(bot, update):
+    out = subprocess.call("reboot") 
+
 def error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"' % (update, error))
 
@@ -123,6 +127,7 @@ def main():
     dp.add_handler(CommandHandler("audio", audio))
     dp.add_handler(CommandHandler("video", video))
     dp.add_handler(CommandHandler("temp", measure_temp))
+    dp.add_handler(CommandHandler("reboot", reboot))
     # log all errors
     dp.add_error_handler(error)
 
