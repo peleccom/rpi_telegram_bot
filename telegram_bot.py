@@ -163,9 +163,9 @@ def set_volume_up(bot, update):
         volume_value += 20
         if volume_value > 150:
             volume_value = 150
-        vlc_player.audio_set_volume(volume_value)
-        volume_value = vlc_player.audio_get_volume()
-        update.message.reply_text("Current volume {}".format(volume_value))
+        fail = vlc_player.audio_set_volume(volume_value)
+        if not fail:
+            update.message.reply_text("Current volume {}".format(volume_value))
 
 
 @restricted
@@ -176,9 +176,9 @@ def set_volume_down(bot, update):
         volume_value -= 20
         if volume_value < 0:
             volume_value = 0
-        vlc_player.audio_set_volume(volume_value)
-        volume_value = vlc_player.audio_get_volume()
-        update.message.reply_text("Current volume {}".format(volume_value))
+        fail = vlc_player.audio_set_volume(volume_value)
+        if not fail:
+            update.message.reply_text("Current volume {}".format(volume_value))
 
 
 def error(bot, update, error):
