@@ -8,15 +8,12 @@ import logging
 import subprocess
 import os
 from functools import wraps
+import ConfigParser
 import vlc
 
-TOKEN = os.environ.get('BOT_TOKEN') # Bot token value
-ADMIN_ID = os.environ.get('BOT_ADMIN_ID') # Only admin can send message to this bot
-try:
-    ADMIN_ID = int(ADMIN_ID)
-except:
-    pass
 
+
+CONFIG_FILENAME = 'config.txt'
 
 AUDIO_FILE_NAME = 'file.mp3'
 
@@ -30,7 +27,7 @@ vlc_player = None
 
 
 
-LIST_OF_ADMINS = [ADMIN_ID, ]
+LIST_OF_ADMINS = []
 
 def restricted(func):
     @wraps(func)
@@ -116,38 +113,66 @@ def reboot(bot, update):
 
 @restricted
 def play_audio(bot, update):
-	global vlc_player
-	file_name = AUDIO_FILE_NAME
-	if not vlc_player:
-		vlc_player=vlc.MediaPlayer(file_name)
-	vlc_player.play()
+    global vlc_player
+    file_name = AUDIO_FILE_NAME
+    if not vlc_player:
+        vlc_player=vlc.MediaPlayer(file_name)
+    vlc_player.play()
 
 @restricted
 def stop_audio(bot, update):
-	global vlc_player
-	if vlc_player:
-		vlc_player.stop() 
+    global vlc_player
+    if vlc_player:
+        vlc_player.stop() 
 
 
 @restricted
 def pause_audio(bot, update):
-	global vlc_player
-	if vlc_player:
-		vlc_player.pause() 
+    global vlc_player
+    if vlc_player:
+        vlc_player.pause() 
 
 @restricted
 def resume_audio(bot, update):
-	global vlc_player
-	if vlc_player:
-		vlc_player.play() 
+    global vlc_player
+    if vlc_player:
+        vlc_player.play() 
 
 def error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"' % (update, error))
 
 
 def main():
-    updater = Updater(TOKEN)
+    script_dir = os.path.dirname(os.path.realpath(__file__))
 
+    config = ConfigParser.RawConfigParser()
+    config.read(os.path.join(script_dir, CONFIG_FILENAME))
+    telegram_bot_token = None
+    telegram_bot_admin_id = None
+    telegram_bot_token = os.environ.get('BOT_TOKEN') # Bot token value
+    telegram_bot_admin_id = os.environ.get('BOT_ADMIN_ID') # Only admin can send message to this bot  
+    try:
+        telegram_bot_token = config.get('Telegram', 'BOT_TOKEN')
+    except ConfigParser.NoOptionError:
+        pass
+    try:
+        telegram_bot_admin_id = config.get('Telegram', 'BOT_ADMIN_ID')
+    except ConfigParser.NoOptionError:
+        pass
+    try:
+        telegram_bot_admin_id = int(telegram_bot_admin_id)
+    except:
+        pass
+    try:
+        global AUDIO_FILE_NAME
+        AUDIO_FILE_NAME = config.get('Player', 'AUDIO_FILE')
+    except ConfigParser.NoOptionError:
+        pass
+    if not telegram_bot_token or not telegram_bot_admin_id:
+        print("You should provide BOT_TOKEN and BOT_ADMIN_ID")
+        sys.exit(1)
+    updater = Updater(telegram_bot_token)
+    LIST_OF_ADMINS.append(telegram_bot_admin_id)
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
 
