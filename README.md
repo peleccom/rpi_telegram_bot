@@ -8,10 +8,8 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-sudo pip install -r requirements.txt 
-
 ```
-Give examples
+sudo pip install -r requirements.txt 
 ```
 
 ### Installing
@@ -27,7 +25,9 @@ Only your can send commands to this bot
 
 to start bot in polling mode (if you placed behind NAT)
 
+```
 python telegram_bot.py
+```
 
 send commands to bot
 
@@ -39,7 +39,7 @@ send commands to bot
 
 ## Authors
 
-* **Alexander Pitkin** - *Initial work* - [PurpleBooth](https://github.com/peleccom)
+* **Alexander Pitkin** - *Initial work* - [GitHub Profile](https://github.com/peleccom)
 
 See also the list of [contributors](https://github.com/peleccom/rpi_telegram_bot/contributors) who participated in this project.
 
