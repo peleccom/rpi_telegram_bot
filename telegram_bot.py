@@ -8,6 +8,7 @@ import logging
 import subprocess
 import os
 from functools import wraps
+import vlc
 
 TOKEN = os.environ.get('BOT_TOKEN') # Bot token value
 ADMIN_ID = os.environ.get('BOT_ADMIN_ID') # Only admin can send message to this bot
@@ -17,12 +18,15 @@ except:
     pass
 
 
+AUDIO_FILE_NAME = 'file.mp3'
+
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
+vlc_player = None
 
 
 
@@ -109,6 +113,34 @@ def measure_temp(bot, update):
 def reboot(bot, update):
     out = subprocess.call("reboot") 
 
+
+@restricted
+def play_audio(bot, update):
+	global vlc_player
+	file_name = AUDIO_FILE_NAME
+	if not vlc_player:
+		vlc_player=vlc.MediaPlayer(file_name)
+	vlc_player.play()
+
+@restricted
+def stop_audio(bot, update):
+	global vlc_player
+	if vlc_player:
+		vlc_player.stop() 
+
+
+@restricted
+def pause_audio(bot, update):
+	global vlc_player
+	if vlc_player:
+		vlc_player.pause() 
+
+@restricted
+def resume_audio(bot, update):
+	global vlc_player
+	if vlc_player:
+		vlc_player.play() 
+
 def error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"' % (update, error))
 
@@ -128,6 +160,10 @@ def main():
     dp.add_handler(CommandHandler("video", video))
     dp.add_handler(CommandHandler("temp", measure_temp))
     dp.add_handler(CommandHandler("reboot", reboot))
+    dp.add_handler(CommandHandler("play", play_audio))
+    dp.add_handler(CommandHandler("stop", stop_audio))
+    dp.add_handler(CommandHandler("pause", pause_audio))
+    dp.add_handler(CommandHandler("resume", resume_audio))
     # log all errors
     dp.add_error_handler(error)
 
