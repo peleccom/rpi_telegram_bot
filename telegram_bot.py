@@ -138,6 +138,37 @@ def resume_audio(bot, update):
     if vlc_player:
         vlc_player.play() 
 
+@restricted
+def get_volume(bot, update):
+    global vlc_player
+    if vlc_player:
+        volume_value = vlc_player.audio_get_volume()
+        update.message.reply_text("Current volume {}".format(volume_value))
+
+@restricted
+def set_volume_up(bot, update):
+    global vlc_player
+    if vlc_player:
+        volume_value = vlc_player.audio_get_volume()
+        volume_value += 20
+        if volume_value > 150:
+            volume_value = 150
+        vlc_player.audio_set_volume(volume_value)
+        volume_value = vlc_player.audio_get_volume()
+        update.message.reply_text("Current volume {}".format(volume_value))
+
+@restricted
+def set_volume_down(bot, update):
+    global vlc_player
+    if vlc_player:
+        volume_value = vlc_player.audio_get_volume()
+        volume_value -= 20
+        if volume_value < 0:
+            volume_value = 0
+        vlc_player.audio_set_volume(volume_value)
+        volume_value = vlc_player.audio_get_volume()
+        update.message.reply_text("Current volume {}".format(volume_value))
+
 def error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"' % (update, error))
 
@@ -189,9 +220,13 @@ def main():
     dp.add_handler(CommandHandler("stop", stop_audio))
     dp.add_handler(CommandHandler("pause", pause_audio))
     dp.add_handler(CommandHandler("resume", resume_audio))
+    dp.add_handler(CommandHandler("volume", get_volume))
+    dp.add_handler(CommandHandler("volume_up", set_volume_up))
+    dp.add_handler(CommandHandler("volume_down", set_volume_down))
     # log all errors
     dp.add_error_handler(error)
 
+    print("Bot started")
     # Start the Bot
     updater.start_polling()
 
