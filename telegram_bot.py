@@ -11,8 +11,6 @@ from functools import wraps
 import ConfigParser
 import vlc
 
-
-
 CONFIG_FILENAME = 'config.txt'
 
 AUDIO_FILE_NAME = 'file.mp3'
@@ -25,9 +23,8 @@ logger = logging.getLogger(__name__)
 
 vlc_player = None
 
-
-
 LIST_OF_ADMINS = []
+
 
 def restricted(func):
     @wraps(func)
@@ -37,44 +34,53 @@ def restricted(func):
             logging.warning("Unauthorized access denied for {}.".format(user_id))
             return
         return func(bot, update, *args, **kwargs)
+
     return wrapped
 
 
 def start(bot, update):
     update.message.reply_text('Hi!')
 
+
 @restricted
 def ping(bot, update):
     update.message.reply_text('pong')
 
-@restricted
-def tts(bot,update):
-    """Say text using festival ttl module"""
-    text = update.message.text[5:]
-    subprocess.Popen(["festival", "--tts", "--language", "russian"], stdin=subprocess.PIPE).communicate(text.encode('utf8'))
 
 @restricted
-def photo(bot,update):
+def tts(bot, update):
+    """Say text using festival ttl module"""
+    text = update.message.text[5:]
+    subprocess.Popen(["festival", "--tts", "--language", "russian"], stdin=subprocess.PIPE).communicate(
+        text.encode('utf8'))
+
+
+@restricted
+def photo(bot, update):
     photo_id = update.update_id
     photo_name = '/tmp/telegram_bot_photo_%s.jpg' % photo_id
     subprocess.call('fswebcam -q -r 1280x720 %s' % photo_name, shell=True)
-    if os.path.exists(photo_name): # Check if fiel exists
+    if os.path.exists(photo_name):  # Check if fiel exists
         update.message.reply_text("Uploading...")
         with open(photo_name, 'rb') as f:
             update.message.reply_photo(photo=f)
         try:
             os.remove(photo_name)
         except:
-            logger.debug("Cannot delete tmp file {}".format(photo_name))    
-        
+            logger.debug("Cannot delete tmp file {}".format(photo_name))
+
+
 @restricted
 def video(bot, update):
     file_id = update.update_id
     duration = 10
     file_name = '/tmp/telegram_bot_video_%s.avi' % file_id
     update.message.reply_text("Starting record...")
-    subprocess.call('ffmpeg  -f v4l2 -r 25 -s 1280x720  -t {duration} -i /dev/video0 {avi_file}'.format(duration=duration, avi_file=file_name), shell=True)
-    if os.path.exists(file_name): # Check if file exists
+    subprocess.call(
+        'ffmpeg  -f v4l2 -r 25 -s 1280x720  -t {duration} -i /dev/video0 {avi_file}'.format(duration=duration,
+                                                                                            avi_file=file_name),
+        shell=True)
+    if os.path.exists(file_name):  # Check if file exists
         update.message.reply_text("Uploading...")
         with open(file_name, 'rb') as f:
             update.message.reply_video(video=f)
@@ -90,7 +96,7 @@ def audio(bot, update):
     file_name = '/tmp/telegram_bot_audio_%s.wav' % file_id
     update.message.reply_text("Starting record...")
     subprocess.call('arecord -D plughw:1 --duration=10 -f cd -vv %s' % file_name, shell=True)
-    if os.path.exists(file_name): # Check if file exists
+    if os.path.exists(file_name):  # Check if file exists
         update.message.reply_text("Uploading...")
         with open(file_name, 'rb') as f:
             update.message.reply_audio(audio=f)
@@ -108,7 +114,7 @@ def measure_temp(bot, update):
 
 @restricted
 def reboot(bot, update):
-    out = subprocess.call("reboot") 
+    out = subprocess.call("reboot")
 
 
 @restricted
@@ -116,27 +122,30 @@ def play_audio(bot, update):
     global vlc_player
     file_name = AUDIO_FILE_NAME
     if not vlc_player:
-        vlc_player=vlc.MediaPlayer(file_name)
+        vlc_player = vlc.MediaPlayer(file_name)
     vlc_player.play()
+
 
 @restricted
 def stop_audio(bot, update):
     global vlc_player
     if vlc_player:
-        vlc_player.stop() 
+        vlc_player.stop()
 
 
 @restricted
 def pause_audio(bot, update):
     global vlc_player
     if vlc_player:
-        vlc_player.pause() 
+        vlc_player.pause()
+
 
 @restricted
 def resume_audio(bot, update):
     global vlc_player
     if vlc_player:
-        vlc_player.play() 
+        vlc_player.play()
+
 
 @restricted
 def get_volume(bot, update):
@@ -144,6 +153,7 @@ def get_volume(bot, update):
     if vlc_player:
         volume_value = vlc_player.audio_get_volume()
         update.message.reply_text("Current volume {}".format(volume_value))
+
 
 @restricted
 def set_volume_up(bot, update):
@@ -157,6 +167,7 @@ def set_volume_up(bot, update):
         volume_value = vlc_player.audio_get_volume()
         update.message.reply_text("Current volume {}".format(volume_value))
 
+
 @restricted
 def set_volume_down(bot, update):
     global vlc_player
@@ -169,6 +180,7 @@ def set_volume_down(bot, update):
         volume_value = vlc_player.audio_get_volume()
         update.message.reply_text("Current volume {}".format(volume_value))
 
+
 def error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"' % (update, error))
 
@@ -180,8 +192,8 @@ def main():
     config.read(os.path.join(script_dir, CONFIG_FILENAME))
     telegram_bot_token = None
     telegram_bot_admin_id = None
-    telegram_bot_token = os.environ.get('BOT_TOKEN') # Bot token value
-    telegram_bot_admin_id = os.environ.get('BOT_ADMIN_ID') # Only admin can send message to this bot  
+    telegram_bot_token = os.environ.get('BOT_TOKEN')  # Bot token value
+    telegram_bot_admin_id = os.environ.get('BOT_ADMIN_ID')  # Only admin can send message to this bot
     try:
         telegram_bot_token = config.get('Telegram', 'BOT_TOKEN')
     except ConfigParser.NoOptionError:
