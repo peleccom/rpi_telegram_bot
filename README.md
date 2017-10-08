@@ -17,7 +17,8 @@ sudo pip install -r requirements.txt
 Setup bot 
 Set environment variables 
 ```
-export BOT_TOKEN='YOUR_BOT_TOKEN_HERE'
+
+export BOT_TOKEN='YOUR_BOT_TOKEN_HERE'\
 export 	BOT_ADMIN_ID='ID_OF_YOUR_TELEGRAM_PROFILE'
 ```
 
@@ -36,6 +37,10 @@ send commands to bot
 
 * [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) - Python wrapper for telegram BOT API
 
+## TODO
+* Add plugin system
+* Add permission sytem
+* New	 functionality
 
 ## Authors
 
