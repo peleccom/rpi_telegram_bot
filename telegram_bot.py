@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Simple Rapberry pi bot
-
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Updater, CommandHandler, Job
 import logging
 import subprocess
@@ -13,6 +13,7 @@ from plugins.player import PlayerPlugin
 from plugins.tts import TTSPlugin
 from plugins.webcam import WebCamPlugin
 from settings import Settings
+import sys
 from utils import restricted
 
 CONFIG_FILENAME = 'config.txt'
@@ -28,9 +29,24 @@ vlc_player = None
 
 settings = Settings()
 
+PLUGINS = [
+    WebCamPlugin(),
+    TTSPlugin(),
+    PlayerPlugin(),
+]
+
 
 def start(bot, update):
-    update.message.reply_text('Hi!')
+    custom_keyboard = []
+    for plugin in PLUGINS:
+        custom_keyboard.append([plugin.name])
+    reply_markup = ReplyKeyboardMarkup(custom_keyboard)
+    update.message.reply_text('Plugin list', reply_markup=reply_markup)
+
+
+def cancel(bot, update):
+    reply_markup = ReplyKeyboardRemove()
+    update.message.reply_text('cancelled', reply_markup=reply_markup)
 
 
 @restricted
@@ -91,15 +107,12 @@ def main():
 
     # on different commands - answer in Telegram
     dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("cancel", cancel))
     dp.add_handler(CommandHandler("ping", ping))
     dp.add_handler(CommandHandler("temp", measure_temp))
     dp.add_handler(CommandHandler("reboot", reboot))
-    plugins = [
-        WebCamPlugin(),
-        TTSPlugin(),
-        PlayerPlugin(),
-    ]
-    for plugin in plugins:
+
+    for plugin in PLUGINS:
         plugin.config(dp)
     # log all errors
     dp.add_error_handler(error)
