@@ -5,12 +5,13 @@ import os
 
 from telegram.ext import CommandHandler
 
+from plugins.plugin import BasePlugin
 from utils import restricted
 
 logger = logging.getLogger(__name__)
 
 
-class TTSPlugin(object):
+class TTSPlugin(BasePlugin):
     name = 'tts'
 
     def tts(self, bot, update):
@@ -20,4 +21,4 @@ class TTSPlugin(object):
             text.encode('utf8'))
 
     def config(self, dp):
-        dp.add_handler(CommandHandler("tts", restricted(self.tts)))
+        self.add_command_handler(dp, 'tts')

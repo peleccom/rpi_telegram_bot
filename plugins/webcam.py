@@ -5,12 +5,13 @@ import os
 
 from telegram.ext import CommandHandler
 
+from plugins.plugin import BasePlugin
 from utils import restricted
 
 logger = logging.getLogger(__name__)
 
 
-class WebCamPlugin(object):
+class WebCamPlugin(BasePlugin):
     name = 'webcam'
 
     def photo(self, bot, update):
@@ -59,6 +60,6 @@ class WebCamPlugin(object):
                 logger.debug("Cannot delete tmp file {}".format(file_name))
 
     def config(self, dp):
-        dp.add_handler(CommandHandler("photo", restricted(self.photo)))
-        dp.add_handler(CommandHandler("audio", restricted(self.audio)))
-        dp.add_handler(CommandHandler("video", restricted(self.video)))
+        self.add_command_handler(dp, 'photo')
+        self.add_command_handler(dp, 'audio')
+        self.add_command_handler(dp, 'video')
