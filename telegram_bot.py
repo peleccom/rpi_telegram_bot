@@ -3,7 +3,8 @@
 #
 # Simple Rapberry pi bot
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import Updater, CommandHandler, Job
+from telegram.ext import Updater, CommandHandler, Job, MessageHandler, Filters, Handler, StringRegexHandler, \
+    RegexHandler
 import logging
 import subprocess
 import os
@@ -26,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 vlc_player = None
 
-
 settings = Settings()
 
 PLUGINS = [
@@ -47,6 +47,20 @@ def start(bot, update):
 def cancel(bot, update):
     reply_markup = ReplyKeyboardRemove()
     update.message.reply_text('cancelled', reply_markup=reply_markup)
+
+
+def plugin_menu_handler(bot, update):
+    plugin_name = update.message.text
+    selected_plugin = None
+    for plugin in PLUGINS:
+        if plugin.name == plugin_name:
+            selected_plugin = plugin
+    custom_keyboard = []
+    if selected_plugin:
+        for name in selected_plugin.names:
+            custom_keyboard.append([name])
+    reply_markup = ReplyKeyboardMarkup(custom_keyboard)
+    update.message.reply_text(plugin_name, reply_markup=reply_markup)
 
 
 @restricted
@@ -111,7 +125,8 @@ def main():
     dp.add_handler(CommandHandler("ping", ping))
     dp.add_handler(CommandHandler("temp", measure_temp))
     dp.add_handler(CommandHandler("reboot", reboot))
-
+    for plugin in PLUGINS:
+        dp.add_handler(RegexHandler(plugin.name, plugin_menu_handler))
     for plugin in PLUGINS:
         plugin.config(dp)
     # log all errors
