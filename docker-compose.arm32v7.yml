@@ -1,0 +1,9 @@
+version: '3'
+services:
+  script:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-arm32v7
+  test:
+    build: .
+    command: ["python", "test.py"]
