@@ -9,4 +9,4 @@ RUN pip install --no-cache-dir -r requirements/dev.txt
 
 COPY . .
 
-CMD [ "pytest" ]
+CMD [ "pytest", "--pep8", "--cov=telegram_bot" ]
