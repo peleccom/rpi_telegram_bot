@@ -3,5 +3,6 @@ services:
   script:
     build: .
   test:
-    build: .
-    command: ["python", "test.py"]
+    build:
+      context: .
+      dockerfile: ./Dockerfile-dev

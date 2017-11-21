@@ -4,8 +4,9 @@ WORKDIR /usr/src/app
 
 COPY requirements/. requirements/
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+
+RUN pip install --no-cache-dir -r requirements/dev.txt
 
 COPY . .
 
-CMD [ "python", "./telegram_bot.py" ]
+CMD [ "pytest" ]
