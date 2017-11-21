@@ -2,7 +2,7 @@
 
 A simple telegram bot to control Raspberry Pi box
 
-[![Build Status](https://travis-ci.org/peleccom/rpi_telegram_bot.svg?branch=dev)](https://travis-ci.org/peleccom/rpi_telegram_bot)
+[![Build Status](https://travis-ci.org/peleccom/rpi_telegram_bot.svg?branch=master)](https://travis-ci.org/peleccom/rpi_telegram_bot)
 
 ## Getting Started
 
