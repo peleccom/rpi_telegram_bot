@@ -3,10 +3,7 @@ import logging
 
 import os
 
-from telegram.ext import CommandHandler
-
 from plugins.plugin import BasePlugin
-from utils import restricted
 
 logger = logging.getLogger(__name__)
 

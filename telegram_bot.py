@@ -3,8 +3,7 @@
 #
 # Simple Rapberry pi bot
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import Updater, CommandHandler, Job, MessageHandler, Filters, Handler, StringRegexHandler, \
-    RegexHandler
+from telegram.ext import Updater, CommandHandler, RegexHandler
 import logging
 import subprocess
 import os
@@ -77,6 +76,7 @@ def measure_temp(bot, update):
 @restricted
 def reboot(bot, update):
     out = subprocess.call("reboot")
+    logger.debug(out)
 
 
 def error(bot, update, error):
@@ -140,6 +140,10 @@ def main():
     # SIGABRT. This should be used most of the time, since start_polling() is
     # non-blocking and will stop the bot gracefully.
     updater.idle()
+
+
+def f(x):
+    return x
 
 
 if __name__ == '__main__':

@@ -1,14 +1,8 @@
-import subprocess
 import logging
 
-import os
-
 import vlc
-from telegram.ext import CommandHandler
-
 from plugins.plugin import BasePlugin
 from settings import Settings
-from utils import restricted
 
 logger = logging.getLogger(__name__)
 

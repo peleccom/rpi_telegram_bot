@@ -1,13 +1,10 @@
 import subprocess
 import logging
 
-import os
-
 from telegram import ReplyKeyboardMarkup
 from telegram.ext import CommandHandler, ConversationHandler, MessageHandler, Filters, RegexHandler
 
 from plugins.plugin import BasePlugin
-from utils import restricted
 
 logger = logging.getLogger(__name__)
 

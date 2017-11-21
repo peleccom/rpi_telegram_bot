@@ -2,4 +2,4 @@ import telegram_bot
 
 
 def test_answer():
-    assert 4 == 5
+    assert telegram_bot.f(4) == 4
