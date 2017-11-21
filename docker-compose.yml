@@ -4,3 +4,4 @@ services:
     build: .
   test:
     build: .
+    command: ["python", "test.py"]
