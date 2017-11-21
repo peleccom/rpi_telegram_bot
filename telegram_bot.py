@@ -56,8 +56,9 @@ def plugin_menu_handler(bot, update):
             selected_plugin = plugin
     custom_keyboard = []
     if selected_plugin:
+        print(selected_plugin.names)
         for name in selected_plugin.names:
-            custom_keyboard.append([name])
+            custom_keyboard.append(["/" + name])
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
     update.message.reply_text(plugin_name, reply_markup=reply_markup)
 
